@@ -7,8 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.first.qrcodescanner.CaptureActivityPortrait
 import com.first.qrcodescanner.R
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
@@ -16,6 +18,8 @@ import com.google.zxing.integration.android.IntentResult
 class QrFragment : Fragment() {
 
     private lateinit var scannedTextView: TextView
+    private lateinit var popupMessageTextView: TextView
+    private lateinit var popupDialog: AlertDialog
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,7 +38,11 @@ class QrFragment : Fragment() {
 
     private fun startScanner() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            IntentIntegrator.forSupportFragment(this).initiateScan()
+            val integrator = IntentIntegrator.forSupportFragment(this)
+            integrator.setOrientationLocked(true)
+            integrator.setBeepEnabled(true)
+            integrator.setCaptureActivity(CaptureActivityPortrait::class.java)
+            integrator.initiateScan()
         } else {
             requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
         }
@@ -56,11 +64,31 @@ class QrFragment : Fragment() {
             if (result.contents == null) {
                 Toast.makeText(context, "Cancelled", Toast.LENGTH_LONG).show()
             } else {
-                scannedTextView.text = "Scanned: ${result.contents}"
+                // Show the scanned message in the popup
+                showPopup("Scanned: ${result.contents}")
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
+    }
+
+    private fun showPopup(message: String) {
+        val dialogView = layoutInflater.inflate(R.layout.popup_layout, null)
+        popupMessageTextView = dialogView.findViewById(R.id.popupMessage)
+
+        // Set the scanned message in the TextView
+        popupMessageTextView.text = message
+
+        popupDialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+                // Optionally, you can reset the scannedTextView text here
+                scannedTextView.text = "Scanned text will appear here"
+            }
+            .create()
+
+        popupDialog.show()
     }
 
     companion object {
