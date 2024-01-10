@@ -5,20 +5,23 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.first.qrcodescanner.CaptureActivityPortrait
-import com.first.qrcodescanner.R
 import com.google.zxing.integration.android.IntentIntegrator
-import com.google.zxing.integration.android.IntentResult
+import android.util.Base64
+import android.util.Log
+import com.first.qrcodescanner.R
+import java.security.Key
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
 
 class QrFragment : Fragment() {
 
     private lateinit var scannedTextView: TextView
-    private lateinit var popupMessageTextView: TextView
     private lateinit var popupDialog: AlertDialog
 
     override fun onCreateView(
@@ -38,11 +41,7 @@ class QrFragment : Fragment() {
 
     private fun startScanner() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            val integrator = IntentIntegrator.forSupportFragment(this)
-            integrator.setOrientationLocked(true)
-            integrator.setBeepEnabled(true)
-            integrator.setCaptureActivity(CaptureActivityPortrait::class.java)
-            integrator.initiateScan()
+            IntentIntegrator.forSupportFragment(this).initiateScan()
         } else {
             requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
         }
@@ -64,29 +63,70 @@ class QrFragment : Fragment() {
             if (result.contents == null) {
                 Toast.makeText(context, "Cancelled", Toast.LENGTH_LONG).show()
             } else {
-                // Show the scanned message in the popup
-                showPopup("Scanned: ${result.contents}")
+                val encryptedData = result.contents
+                val keyBase64 = "+MyRGJ6KeOm6Qnkaz0H7cA=="
+                val key: Key = SecretKeySpec(Base64.decode(keyBase64, Base64.DEFAULT), "AES")
+
+                try {
+                    val decryptedData = decrypt(encryptedData, key)
+                    scannedTextView.text = "Decrypted: $decryptedData"
+
+                    // Show the green popup if decryption is successful
+                    showPopup("Authenticated!", "Your Product Has Been Authenticated!")
+                } catch (e: Exception) {
+                    Log.e("QrFragment", "Error decrypting data: ${e.message}")
+                    scannedTextView.text = "Failed to decrypt data"
+
+                    // Show the red popup if decryption fails
+                    showRedPopup("QR Code Not Recognized!", "Please Scan The Right Qr Code!")
+                }
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
-    private fun showPopup(message: String) {
-        val dialogView = layoutInflater.inflate(R.layout.popup_layout, null)
-        popupMessageTextView = dialogView.findViewById(R.id.popupMessage)
+    fun decrypt(data: String, key: Key): String {
+        val cipher = Cipher.getInstance("AES")
+        cipher.init(Cipher.DECRYPT_MODE, key)
+        val decryptedBytes = cipher.doFinal(Base64.decode(data, Base64.DEFAULT))
+        return String(decryptedBytes)
+    }
 
-        // Set the scanned message in the TextView
+    private fun showPopup(title: String, message: String) {
+        val dialogView = layoutInflater.inflate(R.layout.popup_layout, null)
+        val popupMessageTextView = dialogView.findViewById<TextView>(R.id.popupMessage)
+
         popupMessageTextView.text = message
+
+        val okButton = dialogView.findViewById<Button>(R.id.okButton)
 
         popupDialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
-            .setPositiveButton("OK") { dialog, _ ->
-                dialog.dismiss()
-                // Optionally, you can reset the scannedTextView text here
-                scannedTextView.text = "Scanned text will appear here"
-            }
+            .setCancelable(false)
             .create()
+
+        okButton.setOnClickListener {
+            popupDialog.dismiss()
+            scannedTextView.text = ""
+        }
+
+        popupDialog.show()
+    }
+
+    private fun showRedPopup(title: String, message: String) {
+        val dialogView = layoutInflater.inflate(R.layout.popup_layout_red, null)
+        val closeButton = dialogView.findViewById<Button>(R.id.closeButton)
+
+        popupDialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        closeButton.setOnClickListener {
+            popupDialog.dismiss()
+            scannedTextView.text = ""
+        }
 
         popupDialog.show()
     }
