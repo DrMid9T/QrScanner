@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        replaceFragment(HomeFragment())
+        replaceFragment(QrFragment())
         binding.bottomNavigationView.background = null
 
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
