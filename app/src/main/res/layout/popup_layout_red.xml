@@ -1,0 +1,63 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_shape"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:id="@+id/closeButton"
+            android:background="@drawable/close_icon"
+            android:layout_gravity="right"/>
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/half_circle_red"
+            android:layout_gravity="top|center_horizontal"
+            android:contentDescription="Half Circle"
+            android:layout_marginTop="0dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:textColor="@color/red"
+            android:textStyle="bold"
+            android:text="QR Code Not Recognized!"
+            android:gravity="center"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Please Scan The Right QR Code!"
+            android:gravity="center"
+            android:id="@+id/Successful"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginTop="20dp"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/tryButton"
+            android:background="@drawable/rounded_button_red"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:text="try again"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"
+            android:onClick="onOkayButtonClick"/>
+
+    </LinearLayout>
+</FrameLayout>
